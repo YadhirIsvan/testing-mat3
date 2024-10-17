@@ -1,0 +1,46 @@
+
+name: Master CI/CD
+on: 
+  push:
+    branches: [ "develop"]
+  pull_request:
+    branches: [ "develop"]
+
+jobs:
+  master_ci_cd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 20.x
+
+      - name: Setup
+        run: npm ci
+
+      - name: Test
+        run: |
+          npm test -- --no-watch --no-progress --browsers=ChromeHeadlessCI
+      - name: Build Angular, output in dist/testing-mat3
+        run: |
+          CI=false npm run build
+          
+      - name: Show directory
+        run: |
+          ls -la dist/unit-testing/browser
+      - name: Download and run httpd image, container name serving_base_master
+        run: |
+          docker run -d --name serving_base_master httpd
+          
+      - name: Show running containers
+        run: |
+          docker ps
+          
+      - name: Copy Angular build to container
+        run: |
+          docker cp dist/unit-testing/browser/. serving_base_master:/usr/local/apache2/htdocs
+      - name: List files in container
+        run: |
+          docker exec serving_base_master ls -la /usr/local/apache2/htdocs
