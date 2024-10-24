@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-stddev',
@@ -8,40 +7,45 @@ import { Observable } from 'rxjs';
   styleUrls: ['./stddev.component.css']
 })
 export class StddevComponent implements OnInit {
-  meanDevelopment: number = 0;
-  meanEstimate: number = 0;
-  stddevDevelopment: number = 0;
-  stddevEstimate: number = 0;
-  
-  constructor(private http: HttpClient) { }
+
+  data: { [key: string]: number[] } = {};
+  stddev: { [key: string]: number | undefined } = {};
+
+  constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.loadData();
+    this.loadData('assets/data_column1.txt', 'column1');
+    this.loadData('assets/data_column2.txt', 'column2');
   }
 
-  loadData() {
-    this.http.get('../data/esp.txt', { responseType: 'text' })
-      .subscribe(data => {
-        const values = data.split('\n').map(Number);
-        this.meanEstimate = this.calculateMean(values);
-        this.stddevEstimate = this.calculateStdDev(values, this.meanEstimate);
-      });
 
-    this.http.get('../data/dh.txt', { responseType: 'text' })
-      .subscribe(data => {
-        const values = data.split('\n').map(Number);
-        this.meanDevelopment = this.calculateMean(values);
-        this.stddevDevelopment = this.calculateStdDev(values, this.meanDevelopment);
-      });
+  loadData(filePath: string, column: string): void {
+    this.http.get(filePath, { responseType: 'text' }).subscribe((response) => {
+      const data = this.processData(response);
+      this.data[column] = data;
+      this.stddev[column] = this.calculateStddev(data);
+     
+    });
   }
 
-  calculateMean(values: number[]): number {
-    const total = values.reduce((acc, value) => acc + value, 0);
-    return total / values.length;
+  
+  private processData(response: string): number[] {
+    return response.split('\n')
+                   .map(val => parseFloat(val.trim()))
+                   .filter(val => !isNaN(val));
   }
 
-  calculateStdDev(values: number[], mean: number): number {
-    const variance = values.reduce((acc, value) => acc + Math.pow(value - mean, 2), 0) / (values.length - 1); // Cambiado a (n-1) para la muestra
+
+  calculateStddev(data: number[]): number {
+    if (data.length === 0) return NaN;
+
+    const mean = this.calculateMean(data);
+    const variance = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (data.length - 1);
     return Math.sqrt(variance);
+  }
+
+
+  private calculateMean(data: number[]): number {
+    return data.reduce((a, b) => a + b, 0) / data.length;
   }
 }

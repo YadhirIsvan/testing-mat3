@@ -1,36 +1,50 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { StddevComponent } from './stddev.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('StddevComponent', () => {
   let component: StddevComponent;
-  let fixture: ComponentFixture<StddevComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule], // Agregar esto
-      declarations: [StddevComponent],
-    }).compileComponents();
-  });
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(StddevComponent);
-    component = fixture.componentInstance;
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      declarations: [StddevComponent]
+    });
+    component = TestBed.createComponent(StddevComponent).componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('should return stddev = 572.03 for the given input', () => {
-    const input = [160, 591, 114, 229, 230, 270, 128, 1657, 624, 1503];
-    const mean = component.calculateMean(input);
-    const stddev = component.calculateStdDev(input, mean);
-    expect(stddev).toBeCloseTo(572.03, 2); // Comparar con una tolerancia de 2 decimales
-    console.log('Test for stddev with input [160,591,114,229,230,270,128,1657,624,1503] passed!');
+  it('should call loadData on ngOnInit', () => {
+    spyOn(component, 'loadData');
+    component.ngOnInit();
+    expect(component.loadData).toHaveBeenCalledWith('assets/data_column1.txt', 'column1');
+    expect(component.loadData).toHaveBeenCalledWith('assets/data_column2.txt', 'column2');
   });
 
-  it('should return stddev = 62.26 for the given input', () => {
-    const input = [15.0, 69.9, 6.5, 22.4, 28.4, 65.9, 19.4, 198.7, 38.8, 138.2];
-    const mean = component.calculateMean(input);
-    const stddev = component.calculateStdDev(input, mean);
-    expect(stddev).toBeCloseTo(62.26, 2); // Comparar con una tolerancia de 2 decimales
-    console.log('Test for stddev with input [15.0,69.9,6.5,22.4,28.4,65.9,19.4,198.7,38.8,138.2] passed!');
+
+  it('Should return stddev = 572.03 if input is [160, 591, 114, 229, 230, 270, 128, 1657, 624, 1503]', () => {
+
+    const mockTxtResponse = '160\n591\n114\n229\n230\n270\n128\n1657\n624\n1503\n';
+    component.loadData('assets/data_column1.txt', 'column1');
+    const req = httpMock.expectOne('assets/data_column1.txt');
+    req.flush(mockTxtResponse);
+    expect(component.stddev['column1']).toBeCloseTo(572.03, 2); 
+  });
+  
+  it('Should return stddev = 62.26 if input is [15.0, 69.9, 6.5, 22.4, 28.4, 65.9, 19.4, 198.7, 38.8, 138.2]', () => {
+    const mockTxtResponse = '15.0\n69.9\n6.5\n22.4\n28.4\n65.9\n19.4\n198.7\n38.8\n138.2\n';
+    component.loadData('assets/data_column2.txt', 'column2');
+    const req = httpMock.expectOne('assets/data_column2.txt');
+    req.flush(mockTxtResponse);
+    expect(component.stddev['column2']).toBeCloseTo(62.26, 2); 
+  });
+
+  it('should return NaN when data array s empty', () => {
+    expect(component.calculateStddev([])).toBeNaN();
+  });
+
+  afterEach(() => {
+    httpMock.verify();
   });
 });
