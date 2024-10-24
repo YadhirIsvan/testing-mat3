@@ -1,3 +1,4 @@
+
 export function sumX(dataX: number[]): number {
     return dataX.reduce((acc, val) => acc + val, 0);
   }
@@ -50,4 +51,3 @@ export function sumX(dataX: number[]): number {
     const rr = r ** 2;
   
     return { r, rr };
-  }
