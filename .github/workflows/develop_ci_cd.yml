@@ -1,5 +1,5 @@
 
-name: Master CI/CD
+name: Develop CI/CD
 on: 
   push:
     branches: [ "develop"]
