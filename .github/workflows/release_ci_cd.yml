@@ -1,5 +1,5 @@
 
-name: Master CI/CD
+name: Release CI/CD
 on: 
   push:
     branches: [ "release"]
